@@ -23,6 +23,7 @@ app.py —— OrthoPlot（正绘）后端（Flask，函数图像绘制网站）
 from __future__ import annotations
 
 import argparse
+import base64
 import importlib
 import json
 import math
@@ -96,7 +97,8 @@ UPDATE_MANIFEST_URLS = tuple(
     for url in os.environ.get(
         "ORTHOPLOT_UPDATE_MANIFEST_URLS",
         "https://raw.githubusercontent.com/ui2512/OrthoPlot/main/version.json,"
-        "https://raw.gitcode.com/ui2512/OrthoPlot/raw/main/version.json",
+        "https://gitcode.com/api/v5/repos/ui2512/OrthoPlot/contents/version.json?ref=main,"
+        "https://raw.gitcode.com/ui2512/OrthoPlot/raw/main/version.txt",
     ).split(",")
     if url.strip()
 )
@@ -144,6 +146,10 @@ def _fetch_update_manifest() -> dict | None:
             if len(raw) > UPDATE_MAX_BYTES:
                 continue
             data = json.loads(raw.decode("utf-8-sig"))
+            # GitCode contents API 返回 {"encoding":"base64","content":"..."} 包装
+            if (isinstance(data, dict) and data.get("encoding") == "base64"
+                    and isinstance(data.get("content"), str)):
+                data = json.loads(base64.b64decode(data["content"]).decode("utf-8-sig"))
             if not isinstance(data, dict):
                 continue
             latest = str(data.get("version") or "").strip()
