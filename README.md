@@ -33,8 +33,8 @@ Linux / Windows 安装包与 Android APK 统一放在 Releases，不再使用单
 
 ## 更新检查
 
-应用会自动读取仓库 `main` 分支的 [`version.json`](version.json)（GitHub）与
-[`version.txt`](version.txt)（GitCode 文本镜像，避免 raw 不预览 JSON），失败静默，
+应用会自动读取仓库 `main` 分支的 [`version.json`](version.json)（GitHub raw）、
+GitCode contents API 与 [`version.txt`](version.txt)（GitCode 文本镜像），失败静默，
 6 小时内不重复请求。发现更高版本时，Web 端显示更新横幅，Android 端弹窗提示；
 桌面端会按系统选择 Linux / Windows 安装包，下载地址指向 Releases。也可以在使用说明里手动检查。
 
