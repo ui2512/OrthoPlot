@@ -117,9 +117,13 @@
     el.updateVersion.textContent = 'v' + latest;
     el.updateNotes.textContent = String(data.notes || '').trim();
     const downloads = (data.downloads && typeof data.downloads === 'object') ? data.downloads : {};
-    // Android 浏览器优先给 APK / Android 分支；桌面浏览器给 Web 仓库
-    const isAndroid = /Android/i.test(navigator.userAgent || '');
-    const url = (isAndroid && downloads.android) || downloads.web || data.url || '';
+    // 按系统选择安装包：Android → APK 分支；Windows / Linux → 对应桌面包；其余 → Web 仓库
+    const ua = navigator.userAgent || '';
+    let url = '';
+    if (/Android/i.test(ua)) url = downloads.android || '';
+    else if (/Windows/i.test(ua)) url = downloads.windows || '';
+    else if (/Linux/i.test(ua)) url = downloads.linux || '';
+    url = url || downloads.web || data.url || '';
     if (url) {
       el.updateLink.href = url;
       el.updateLink.hidden = false;

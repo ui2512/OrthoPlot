@@ -21,6 +21,7 @@
     <!-- 更新与许可 -->
     <string name="btn_check_update">检查更新</string>
     <string name="about_source">GPL-3.0 · 查看源码</string>
+    <string name="ai_generated_notice">AI 生成 · 可能存在错误</string>
     <string name="update_title">发现新版本 %1$s</string>
     <string name="update_message">有可用的新版本，是否前往下载？</string>
     <string name="update_now">前往更新</string>

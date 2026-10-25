@@ -39,7 +39,7 @@ import androidx.core.content.ContextCompat
  * 局域网 IP，同一 Wi-Fi 下的设备即可用浏览器访问。切换由 ServerController
  * 热切换完成（werkzeug make_server 的优雅停机），无需杀进程。
  *
- * 界面控件用 findViewById 而非 ViewBinding：仅 8 个控件， findViewById 不依赖
+ * 界面控件用 findViewById 而非 ViewBinding：仅 9 个控件， findViewById 不依赖
  * 生成代码，在受限环境（如 Termux 端构建）下更稳。
  *
  * 首次启动需解压 Python 运行时并导入依赖（sympy 较大），慢设备上约十几秒；
@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvLan: TextView
     private lateinit var tvCheckUpdate: TextView
     private lateinit var tvSource: TextView
+    private lateinit var tvAiNotice: TextView
     private var updateDialogShowing = false
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -81,6 +82,7 @@ class MainActivity : AppCompatActivity() {
         tvLan = findViewById(R.id.tv_lan)
         tvCheckUpdate = findViewById(R.id.tv_check_update)
         tvSource = findViewById(R.id.tv_source)
+        tvAiNotice = findViewById(R.id.tv_ai_notice)
 
         ServerController.attach(applicationContext)
         ServerController.addListener(stateListener)
@@ -88,6 +90,9 @@ class MainActivity : AppCompatActivity() {
         btnOpen.setOnClickListener { openBrowser() }
         tvCheckUpdate.setOnClickListener { checkForUpdates(manual = true) }
         tvSource.setOnClickListener { openUrl("https://github.com/ui2512/OrthoPlot") }
+        tvAiNotice.setOnClickListener {
+            openUrl("https://github.com/ui2512/OrthoPlot/blob/main/AI_GENERATED.md")
+        }
 
         // 先设初值再挂监听，避免触发一次无谓的回调
         swLan.isChecked = prefs.getBoolean(ServerController.KEY_LAN, false)

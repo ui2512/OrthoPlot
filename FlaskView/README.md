@@ -1,5 +1,7 @@
 # OrthoPlot 正绘（FlaskView）—— 内置 Python（Chaquopy）本地网站服务器
 
+> **AI 生成声明**：本项目由 AI 辅助生成，可能存在错误；使用前请自行审查。详见 [AI_GENERATED.md](../AI_GENERATED.md)。
+
 Android 应用：APK 内置 Python 3.14 运行时（[Chaquopy](https://chaquo.com/chaquopy)），
 打开应用即在**本机进程内**启动 Flask 网站（函数图像绘制），然后用任意浏览器访问
 `http://127.0.0.1:5000`。
@@ -155,3 +157,5 @@ Chaquopy 在构建期用它做 pip 依赖解析与字节码预编译，且版本
 本项目使用 GNU General Public License v3.0（GPL-3.0）发布，详见 [LICENSE](../LICENSE)。
 
 Copyright (C) 2026 ui2512
+
+第三方组件（Chaquopy、Flask、SymPy、Python 等）的许可证与声明见 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。

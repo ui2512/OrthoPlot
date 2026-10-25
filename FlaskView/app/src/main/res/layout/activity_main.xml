@@ -117,5 +117,16 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/tv_ai_notice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:text="@string/ai_generated_notice"
+            android:textColor="#FF6B7683"
+            android:textSize="11sp" />
+
     </LinearLayout>
 </ScrollView>

@@ -152,7 +152,7 @@ def _fetch_update_manifest() -> dict | None:
             downloads = data.get("downloads")
             downloads = downloads if isinstance(downloads, dict) else {}
             clean_downloads = {}
-            for key in ("web", "android"):
+            for key in ("web", "android", "linux", "windows"):
                 value = _valid_url(downloads.get(key))
                 if value:
                     clean_downloads[key] = value
