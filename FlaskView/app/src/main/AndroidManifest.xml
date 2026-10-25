@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 本地 Socket 端口探测需要（访问本机回环地址同样需要 INTERNET 权限；
+         网站页面由用户浏览器加载，与本应用的网络策略无关） -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 前台服务保活：网站运行在前台服务中，退到后台 / 划掉屏幕后不被轻易回收 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Android 14+ 要求前台服务声明类型；本地网站服务归属 specialUse -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- 常驻通知展示服务状态（重启 / 关闭入口）；Android 13+ 需运行时申请，低版本自动授予 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 引导加入电池优化白名单（Doze 豁免），进一步降低后台被杀概率 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FlaskView">
+
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 前台服务：保活 + 常驻通知（状态查看 / 重启 / 关闭）。
+             stopWithTask 默认 false：从最近任务划掉屏幕后服务继续运行 -->
+        <service
+            android:name=".ServerService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the in-process local Flask web server running so the user's browser can reach it; the persistent notification shows server status and offers restart/stop actions." />
+        </service>
+    </application>
+</manifest>

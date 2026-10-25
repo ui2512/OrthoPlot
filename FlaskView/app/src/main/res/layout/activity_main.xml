@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name"
+        android:textColor="#FFE8EAED"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_url"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:fontFamily="monospace"
+        android:text="@string/server_url"
+        android:textColor="#FF1E88E5"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tv_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:text="@string/status_starting"
+        android:textColor="#FF9AA4B0"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/btn_open"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:enabled="false"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:text="@string/btn_open_browser" />
+
+    <TextView
+        android:id="@+id/tv_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="26dp"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:text="@string/hint_server_lifetime"
+        android:textColor="#FF6B7683"
+        android:textSize="12sp" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/sw_lan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:text="@string/lan_toggle"
+        android:textColor="#FFE8EAED"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/tv_lan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:text="@string/lan_off"
+        android:textColor="#FF9AA4B0"
+        android:textSize="13sp" />
+
+</LinearLayout>

@@ -1,0 +1,16 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Android Studio / IDE
+.idea/
+*.iml
+local.properties
+
+# build.sh 工具链与产物缓存
+.buildtools/
+
+# 自动生成的签名
+keystore/
+*.keystore

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">正绘</string>
+
+    <!-- 本地服务地址（改端口时与 ServerController 的 SERVER_URL/SERVER_PORT 同步） -->
+    <string name="server_url">http://127.0.0.1:5000</string>
+    <string name="status_starting">正在启动本地服务…\n首次启动需解压 Python 运行时并加载依赖，可能需要十几秒</string>
+    <string name="btn_open_browser">在浏览器中打开</string>
+    <string name="hint_server_lifetime">服务在前台保活：退到后台、从最近任务划掉屏幕后仍继续运行，\n通知栏可查看状态、重启或关闭服务；\n若浏览器打不开页面，可在通知栏点“重启服务”或重新打开本应用。\n个别手机（小米 / 华为等）仍杀后台时，需在系统设置中允许本应用“自启动”与“后台运行”。</string>
+
+    <!-- 服务状态（界面） -->
+    <string name="status_ready">服务已启动 ✓</string>
+    <string name="status_stopped">服务已关闭\n重新打开本应用即可再次启动</string>
+    <string name="status_failed">服务启动失败：%1$s\n可从通知栏点“重启服务”或重开应用重试；\n排查: adb logcat -s python.stderr python.stdout</string>
+
+    <!-- 局域网访问开关 -->
+    <string name="lan_toggle">允许局域网访问（仅限可信网络）</string>
+    <string name="lan_off">当前仅本机可访问。打开开关后，同一 Wi-Fi 下的设备也能用浏览器访问。</string>
+    <string name="lan_no_ip">已允许局域网访问，但尚未获取到局域网地址，请连接 Wi-Fi 后返回本页面。</string>
+
+    <!-- 前台服务通知（状态查看 + 重启 / 关闭） -->
+    <string name="notif_channel_name">服务状态</string>
+    <string name="notif_channel_desc">显示本地网站服务的运行状态，提供“重启服务 / 关闭服务”按钮</string>
+    <string name="notif_title">正绘 · 本地服务</string>
+    <string name="notif_starting">正在启动本地服务…</string>
+    <string name="notif_ready_local">服务运行中：%1$s（点击打开应用）</string>
+    <string name="notif_ready_lan">服务运行中，局域网内设备可访问：</string>
+    <string name="notif_failed">启动失败：%1$s</string>
+    <string name="notif_action_restart">重启服务</string>
+    <string name="notif_action_stop">关闭服务</string>
+</resources>

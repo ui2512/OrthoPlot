@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 蓝色圆角背景 -->
+    <path
+        android:fillColor="#1E88E5"
+        android:pathData="M12,0 L96,0 A12,12 0 0 1 108,12 L108,96 A12,12 0 0 1 96,108 L12,108 A12,12 0 0 1 0,96 L0,12 A12,12 0 0 1 12,0 Z" />
+    <!-- 坐标轴 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M26,86 L26,26 M26,86 L86,86" />
+    <!-- 正弦曲线 -->
+    <path
+        android:strokeColor="#FFEB3B"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M30,56 C38,28 46,28 54,56 C62,84 70,84 78,56" />
+</vector>
