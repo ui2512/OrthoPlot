@@ -1,11 +1,14 @@
 {
   "version": "1.1.0",
   "released": "2026-10-25",
-  "notes": "新增自动更新检测；项目更名为 OrthoPlot 正绘；采用 GPL-3.0 许可。",
+  "notes": "新增自动更新检测与 GPL-3.0 许可；提供 Linux / Windows 1.1.0 安装包。本项目由 AI 辅助生成。",
+  "ai_generated": true,
   "url": "https://github.com/ui2512/OrthoPlot",
   "downloads": {
     "web": "https://github.com/ui2512/OrthoPlot",
-    "android": "https://github.com/ui2512/OrthoPlot/tree/android"
+    "android": "https://github.com/ui2512/OrthoPlot/tree/android",
+    "linux": "https://raw.githubusercontent.com/ui2512/OrthoPlot/packages/OrthoPlot-1.1.0-linux-amd64-arm64.tar.gz",
+    "windows": "https://raw.githubusercontent.com/ui2512/OrthoPlot/packages/OrthoPlot-1.1.0-windows-amd64.zip"
   },
   "mirror": "https://gitcode.com/ui2512/OrthoPlot"
 }

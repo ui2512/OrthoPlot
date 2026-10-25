@@ -1,5 +1,7 @@
 # OrthoPlot · 正绘（函数图像绘制器）
 
+> **AI 生成声明**：本项目由 AI 辅助生成，可能存在错误；使用前请自行审查。详见 [AI_GENERATED.md](../AI_GENERATED.md)。
+
 一个用 **HTML + Python** 实现的函数图像网站：输入任意表达式，后端用 SymPy 做符号分析，前端用 Canvas 实时绘制图像，
 并把函数的类型、定义域、零点、顶点、渐近线、单调区间、导数等性质一并算出来。
 
@@ -148,7 +150,8 @@ curl -X POST http://127.0.0.1:8000/api/analyze \
 版本号来自本文件顶部的 `APP_VERSION`；更新清单是仓库 `main` 分支根目录的 `version.json`，
 默认依次请求 GitHub raw 与 GitCode raw，可用环境变量 `ORTHOPLOT_UPDATE_MANIFEST_URLS`
 （逗号分隔）覆盖。服务端缓存成功结果 6 小时、失败结果 10 分钟；手动检查会带 `?force=1`
-绕过缓存。网络不可用时静默返回 `ok=false`，不影响绘图。
+绕过缓存。网络不可用时静默返回 `ok=false`，不影响绘图。桌面浏览器发现更新时会按系统
+选择 Linux / Windows 安装包（`version.json` 的 `downloads.linux` / `downloads.windows`）。
 
 发布新版本时同步修改：
 
@@ -197,3 +200,5 @@ curl -X POST http://127.0.0.1:8000/api/analyze \
 本项目使用 GNU General Public License v3.0（GPL-3.0）发布，详见 [LICENSE](../LICENSE)。
 
 Copyright (C) 2026 ui2512
+
+第三方组件（Flask、SymPy 等）的许可证与声明见 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
