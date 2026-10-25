@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="description" content="OrthoPlot（正绘）在线函数图像绘制器，支持一次函数、二次函数、反比例函数、指数、对数、三角等各类函数的实时绘制与性质分析。">
+  <title>OrthoPlot 正绘 · 函数图像绘制器 · 一次函数 / 二次函数 / 反比例函数</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ STATIC_V }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">📈</span>
+    <span>OrthoPlot</span>
+    <span class="sub">正绘</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn ghost" id="btn-theme" title="切换深浅色">🌙 <span class="tlabel">夜间</span></button>
+    <button class="btn ghost" id="btn-save" title="把当前函数与视野保存为文件">💾 <span class="tlabel">保存</span></button>
+    <button class="btn ghost" id="btn-open" title="从保存的文件恢复">📂 <span class="tlabel">打开</span></button>
+    <button class="btn ghost" id="btn-help" title="使用说明">? <span class="tlabel">帮助</span></button>
+  </div>
+  <input type="file" id="file-open" accept=".json,application/json" hidden>
+</header>
+
+<main class="layout">
+
+  <!-- ==================== 左侧面板 ==================== -->
+  <aside class="sidebar">
+
+    <!-- 输入 -->
+    <section class="card">
+      <h2>添加函数</h2>
+      <div class="input-row">
+        <span class="prefix">y =</span>
+        <input id="expr-input" type="text" placeholder="例如 2x+1、x^2-3x+2、1/x、|x|" autocomplete="off" spellcheck="false">
+        <button class="btn primary" id="btn-add">绘制</button>
+      </div>
+      <div class="quick-tags" id="quick-tags">
+        <span class="tag" data-insert="^2">x²</span>
+        <span class="tag" data-insert="^3">x³</span>
+        <span class="tag" data-insert="^">^</span>
+        <span class="tag" data-insert="sqrt(">√</span>
+        <span class="tag" data-insert="|">|x|</span>
+        <span class="tag" data-insert="pi">π</span>
+        <span class="tag" data-insert="e^">eˣ</span>
+        <span class="tag" data-insert="sin(">sin</span>
+        <span class="tag" data-insert="cos(">cos</span>
+        <span class="tag" data-insert="tan(">tan</span>
+        <span class="tag" data-insert="ln(">ln</span>
+        <span class="tag" data-insert="lg(">lg</span>
+        <span class="tag" data-insert="abs(">abs</span>
+      </div>
+      <div class="hint" id="input-hint">回车即可绘制 · 支持 <code>2x</code>、<code>x^2</code>、<code>x²</code>、<code>|x|</code> 等写法</div>
+    </section>
+
+    <!-- 函数列表 -->
+    <section class="card">
+      <h2>已绘制的函数 <span class="count" id="fn-count">0</span></h2>
+      <ul id="fn-list"></ul>
+      <div class="empty" id="fn-empty">还没有函数，从下方预设里挑一个，或者自己输入吧～</div>
+      <div style="margin-top:10px; display:flex; gap:6px;" id="fn-actions">
+        <button class="btn tiny" id="btn-clear">清空全部</button>
+        <button class="btn tiny" id="btn-demo">示例组合</button>
+      </div>
+    </section>
+
+    <!-- 预设 -->
+    <section class="card">
+      <h2>函数预设库 <span class="count">点击即绘制</span></h2>
+      <div id="preset-groups"></div>
+    </section>
+
+  </aside>
+
+  <!-- ==================== 右侧画布 ==================== -->
+  <section class="stage">
+    <div class="canvas-wrap">
+      <canvas id="plot"></canvas>
+
+      <div class="toolbar">
+        <button class="btn icon" id="btn-zoom-in" title="放大（滚轮上滚 / +）">＋</button>
+        <button class="btn icon" id="btn-zoom-out" title="缩小（滚轮下滚 / -）">－</button>
+        <button class="btn icon" id="btn-reset" title="重置视图（双击画布 / R）">⟲</button>
+        <div class="sep"></div>
+        <button class="btn tiny active" id="btn-grid" title="显示网格">网格</button>
+        <button class="btn tiny active" id="btn-asym" title="显示渐近线">渐近线</button>
+        <button class="btn tiny" id="btn-cross" title="显示两两交点">交点</button>
+        <button class="btn tiny" id="btn-tangent" title="切线工具：激活后点击曲线上任意一点，画出该点切线">切线</button>
+        <button class="btn tiny" id="btn-integral" title="积分工具：激活后先点起点再点终点，着色并计算定积分">∫面积</button>
+        <button class="btn tiny" id="btn-table" title="数据表（整数点取值）">数据表</button>
+        <button class="btn tiny" id="btn-cursor" title="光标模式：点按画布任意位置，显示十字准线与函数值（触屏设备默认开启）">光标</button>
+        <div class="sep"></div>
+        <button class="btn icon" id="btn-full" title="全屏">⛶</button>
+        <button class="btn icon" id="btn-export" title="导出 PNG 图片（可选分辨率）">⬇</button>
+      </div>
+
+      <div class="status-badge" id="status-badge"></div>
+      <div class="readout" id="readout"></div>
+    </div>
+
+    <!-- 数据表 -->
+    <div class="bottom-panel" id="table-panel">
+      <header>
+        <span>数据表 · 整数点函数值</span>
+        <button class="btn tiny ghost" id="btn-table-close">收起</button>
+      </header>
+      <div class="table-scroll" id="table-scroll"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 帮助 -->
+<div class="modal-mask" id="help-modal">
+  <div class="modal">
+    <button class="btn tiny modal-close" id="btn-help-close">关闭</button>
+    <h3>使用说明</h3>
+
+    <h4>支持的书写方式</h4>
+    <ul>
+      <li>一次函数：<code>2x+1</code>、<code>y=-3x+2</code>、<code>kx+b</code></li>
+      <li>二次函数：<code>x^2-3x+2</code>、<code>x²</code>、<code>-x^2+4x</code>、<code>a*x^2+b*x+c</code></li>
+      <li>反比例函数：<code>1/x</code>、<code>-2/x</code>、<code>6/(x-1)</code>、<code>k/x</code></li>
+      <li>指数 / 对数：<code>2^x</code>、<code>e^x</code>、<code>ln(x)</code>、<code>lg(x)</code>、<code>log2(x)</code></li>
+      <li>三角 / 反三角：<code>sin(x)</code>、<code>2sin(2x+pi/3)</code>、<code>tan(x)</code>、<code>asin(x)</code></li>
+      <li>根式 / 绝对值 / 取整：<code>sqrt(x)</code>、<code>x^(1/3)</code>、<code>|x-1|+2</code>、<code>floor(x)</code></li>
+    </ul>
+    <p class="kbd-hint">不必写 <code>y=</code>；<code>2x</code>、<code>x(x+1)</code> 这类省略乘号的写法会被自动识别；
+      <code>π</code>、<code>×</code>、<code>÷</code>、<code>²</code> 等全角/特殊符号也可以直接输入。</p>
+
+    <h4>参数函数</h4>
+    <p>表达式里除了 <code>x</code> 以外的字母（如 <code>a</code>、<code>b</code>、<code>k</code>）都会自动变成参数，
+      下方出现滑块，拖动即可实时观察图像变化。例如输入 <code>a*x^2+b*x+c</code> 或 <code>kx+b</code>。</p>
+
+    <h4>画布操作</h4>
+    <ul>
+      <li><b>滚轮</b>：以鼠标位置为中心缩放</li>
+      <li><b>拖动</b>：平移坐标系</li>
+      <li><b>双击</b>：恢复默认视图（-10 ~ 10）</li>
+      <li><b>移动鼠标</b>：显示十字准线与各函数在该 x 处的取值</li>
+      <li><b>触屏</b>：单指拖动平移，双指捏合缩放</li>
+      <li><b>键盘</b>：方向键平移，<code>+</code> / <code>-</code> 缩放，<code>R</code> 复位</li>
+    </ul>
+
+    <h4>切线、积分与导数曲线</h4>
+    <p>工具栏点 <b>切线</b> 后，点击曲线上任意一点即可画出该点切线并显示斜率；
+       点 <b>∫面积</b> 后先点起点再点终点，自动为曲线与 x 轴围成的区域着色并计算定积分
+       （区间内有奇点时会给出提示）。函数卡片上的 <code>f′</code> 按钮可叠加导数曲线（虚线）。
+       工具栏的 <b>💾保存</b> / <b>📂打开</b> 可把当前全部函数与视野存成文件，或从文件恢复，
+       方便换设备继续使用；不保存时状态也会自动保存在本机，下次打开自动恢复。</p>
+
+    <h4>导出图片</h4>
+    <p>工具栏 <b>⬇</b> 打开导出对话框：可选“当前尺寸 / 2× / 1080p / 1440p / 4K / 5K / 8K / 1 亿像素”，
+      也可直接输入任意宽高（只限制总像素约 1.08 亿，单边不设固定上限，实际受浏览器画布上限约束）。导出会按所选分辨率
+      <b>重新绘制</b>而不是放大截图，文字和线条保持清晰；长宽比与画布不同时，
+      画面按目标比例拉伸，保证完整视野。</p>
+
+    <h4>触屏与光标模式</h4>
+    <p>手机 / 平板打开时会自动进入<b>光标模式</b>（工具栏 <b>光标</b> 按钮高亮）：手指按住画布拖动，
+       十字准线会<b>自动浮在手指上方</b>实时跟随，不会被手指遮挡，像鼠标悬停一样连续读数；
+       抬手后准线停在原地，点按其他位置可移动光标。拖动仍是平移，双指捏合仍是缩放。
+       桌面浏览器默认关闭（移动鼠标即可读数），需要时也可点 <b>光标</b> 按钮手动开关。</p>
+
+    <h4>关于对数记号的说明</h4>
+    <p>按照国内教材习惯：<code>lg(x)</code> 表示常用对数（以 10 为底），<code>ln(x)</code> 表示自然对数，
+      <code>log(x)</code> 等同于以 10 为底，<code>log(x, b)</code> 表示以 <code>b</code> 为底。</p>
+
+    <h4>后端在做什么</h4>
+    <p>函数的解析、类型识别（一次 / 二次 / 反比例 / 指数 / 对数 …）、零点、顶点、渐近线、单调区间等
+      全部由 Python（SymPy）计算；前端只负责把结果画出来。坐标轴网格、曲线平滑采样与不连续点断开
+      也由后端的自适应采样算法完成。</p>
+  </div>
+</div>
+
+<!-- 导出 PNG（自定义分辨率） -->
+<div class="modal-mask" id="export-modal">
+  <div class="modal export-modal">
+    <button class="btn tiny modal-close" id="btn-export-close">关闭</button>
+    <h3>导出 PNG</h3>
+    <p class="export-tip">按所选分辨率重新绘制（不是放大截图），文字与线条保持清晰。</p>
+    <div class="export-presets">
+      <button class="btn tiny" data-export-preset="current">当前尺寸</button>
+      <button class="btn tiny" data-export-preset="2x">2×</button>
+      <button class="btn tiny" data-export-preset="1080p">1920×1080</button>
+      <button class="btn tiny" data-export-preset="1440p">2560×1440</button>
+      <button class="btn tiny" data-export-preset="4k">3840×2160</button>
+      <button class="btn tiny" data-export-preset="5k">5120×2880</button>
+      <button class="btn tiny" data-export-preset="8k">7680×4320</button>
+      <button class="btn tiny" data-export-preset="100mp">10000×10000（1 亿）</button>
+    </div>
+    <div class="export-fields">
+      <label>宽度 <input id="export-width" type="number" inputmode="numeric" min="100" step="1"> px</label>
+      <label>高度 <input id="export-height" type="number" inputmode="numeric" min="100" step="1"> px</label>
+    </div>
+    <p class="export-hint">上限：只限制总像素约 1 亿（最高 1.08 亿），单边不设固定上限，实际受浏览器画布上限约束。1 亿像素导出需要数秒到数十秒，手机端受内存限制，失败时会给出提示。长宽比与画布不同时会按目标比例拉伸，保证完整视野。</p>
+    <div class="export-actions">
+      <button class="btn" id="btn-export-cancel">取消</button>
+      <button class="btn primary" id="btn-export-confirm">导出</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/mathrender.js') }}?v={{ STATIC_V }}"></script>
+<script src="{{ url_for('static', filename='js/plot.js') }}?v={{ STATIC_V }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}?v={{ STATIC_V }}"></script>
+</body>
+</html>

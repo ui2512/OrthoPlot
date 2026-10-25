@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Gradle / Android 构建产物
+.gradle/
+build/
+app/build/
+.buildtools/
+local.properties
+.idea/
+*.iml
+keystore/
+*.keystore
+
+# 发布产物（APK 单独放在 apk 分支）
+*.apk
+Linux/
+Windows/
+pkg-staging/
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+*.log
+
+# 位于独立分支（android / screenshot）
+FlaskView/
+函数图像.png
+5/函数图像.png
