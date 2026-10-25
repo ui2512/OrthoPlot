@@ -1,0 +1,11 @@
+{
+  "version": "1.1.0",
+  "released": "2026-10-25",
+  "notes": "新增自动更新检测；项目更名为 OrthoPlot 正绘；采用 GPL-3.0 许可。",
+  "url": "https://github.com/ui2512/OrthoPlot",
+  "downloads": {
+    "web": "https://github.com/ui2512/OrthoPlot",
+    "android": "https://gitcode.com/ui2512/OrthoPlot/tree/android"
+  },
+  "mirror": "https://gitcode.com/ui2512/OrthoPlot"
+}

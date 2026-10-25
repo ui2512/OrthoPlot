@@ -1,5 +1,5 @@
 /* ============================================================
-   函数图像绘制器 · 样式表
+   OrthoPlot · 正绘 · 样式表
    ============================================================ */
 
 :root {
@@ -149,6 +149,7 @@ button, input, select { font-family: inherit; font-size: inherit; color: inherit
   transition: background .15s, border-color .15s, transform .08s, color .15s;
   white-space: nowrap;
   user-select: none;
+  text-decoration: none;
 }
 
 .btn:hover { background: var(--surface-3); }
@@ -727,3 +728,68 @@ table.data-table tbody tr:hover { background: var(--surface-2); }
   justify-content: flex-end;
   gap: 10px;
 }
+
+/* ---------------- 自动更新提示 ---------------- */
+
+.update-banner {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 60;
+  width: min(680px, calc(100vw - 24px));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 12px 11px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  font-size: 13px;
+}
+
+.update-banner[hidden] { display: none; }
+
+.update-banner-main { flex: 1; min-width: 0; }
+
+.update-banner-title { font-weight: 600; color: var(--text); }
+.update-banner-title b { color: var(--accent); }
+
+.update-banner-notes {
+  margin-top: 2px;
+  color: var(--text-faint);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.update-banner-actions { display: flex; gap: 8px; flex: none; }
+
+@media (max-width: 600px) {
+  .update-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 9px;
+    padding: 11px 12px;
+  }
+  .update-banner-notes {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .update-banner-actions { justify-content: flex-end; }
+}
+
+/* 帮助弹层里的版本 / 许可证链接 */
+.modal a { color: var(--accent); text-decoration: none; }
+.modal a:hover { text-decoration: underline; }
+.modal .help-meta {
+  margin: 6px 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.modal .help-meta .btn { vertical-align: middle; }

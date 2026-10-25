@@ -84,6 +84,7 @@ python3 app.py --debug              # 调试模式，改代码自动重启
 * **保存 / 打开文件**：右上角 💾保存 把当前全部函数（含参数、颜色、f′ 状态）与视野存成
   `.json` 文件（进入浏览器下载目录），📂打开 可随时恢复，也方便传给别的设备继续用。
 * **夜间模式**：右上角切换，画布配色同步变化。
+* **自动更新检测**：打开页面后自动检查 GitHub / GitCode 上的 `version.json`；发现新版本时显示提示条，帮助面板里可手动检查。
 
 ---
 
@@ -111,7 +112,8 @@ python3 app.py --debug              # 调试模式，改代码自动重启
 | 接口 | 说明 |
 | --- | --- |
 | `GET /` | 页面 |
-| `GET /api/health` | 健康检查 |
+| `GET /api/health` | 健康检查（含当前版本号） |
+| `GET /api/update-check` | 读取远端 `version.json`，返回当前 / 最新版本与下载地址；离线时 `ok=false` |
 | `GET /api/presets` | 预设函数库 |
 | `POST /api/analyze` | 解析并分析一个函数：类型、性质、零点、渐近线、单调区间、极值、拐点、导数 |
 | `POST /api/plot` | 批量采样曲线（绘图数据），可选 `derivative: true` 同时采样导数曲线，可选返回整数点数据表 |
@@ -140,6 +142,19 @@ curl -X POST http://127.0.0.1:8000/api/analyze \
   "derivative_latex": "- \\frac{6}{\\left(x - 1\\right)^{2}}"
 }
 ```
+
+### 更新检测
+
+版本号来自本文件顶部的 `APP_VERSION`；更新清单是仓库 `main` 分支根目录的 `version.json`，
+默认依次请求 GitHub raw 与 GitCode raw，可用环境变量 `ORTHOPLOT_UPDATE_MANIFEST_URLS`
+（逗号分隔）覆盖。服务端缓存成功结果 6 小时、失败结果 10 分钟；手动检查会带 `?force=1`
+绕过缓存。网络不可用时静默返回 `ok=false`，不影响绘图。
+
+发布新版本时同步修改：
+
+1. `app.py` 的 `APP_VERSION`
+2. Android 的 `versionName`（`FlaskView/app/build.gradle.kts`）
+3. 仓库根目录 `version.json` 的 `version`、`notes`、`downloads`
 
 分析接口带 10 分钟内存缓存，重复输入或拖动参数时不会重复做符号运算。
 
@@ -174,3 +189,11 @@ curl -X POST http://127.0.0.1:8000/api/analyze \
 
 **Q：能画 `x^2+y^2=1` 这种隐函数吗？**
 不能。本网站只支持 `y = f(x)` 形式的显函数。
+
+---
+
+## 八、许可证
+
+本项目使用 GNU General Public License v3.0（GPL-3.0）发布，详见 [LICENSE](../LICENSE)。
+
+Copyright (C) 2026 ui2512

@@ -25,6 +25,17 @@
   <input type="file" id="file-open" accept=".json,application/json" hidden>
 </header>
 
+<div class="update-banner" id="update-banner" role="status" aria-live="polite" hidden>
+  <div class="update-banner-main">
+    <div class="update-banner-title">发现新版本 <b id="update-version"></b></div>
+    <div class="update-banner-notes" id="update-notes"></div>
+  </div>
+  <div class="update-banner-actions">
+    <a class="btn tiny primary" id="update-link" href="#" target="_blank" rel="noopener noreferrer">查看更新</a>
+    <button class="btn tiny ghost" id="update-dismiss" type="button">忽略此版本</button>
+  </div>
+</div>
+
 <main class="layout">
 
   <!-- ==================== 左侧面板 ==================== -->
@@ -172,6 +183,13 @@
     <p>函数的解析、类型识别（一次 / 二次 / 反比例 / 指数 / 对数 …）、零点、顶点、渐近线、单调区间等
       全部由 Python（SymPy）计算；前端只负责把结果画出来。坐标轴网格、曲线平滑采样与不连续点断开
       也由后端的自适应采样算法完成。</p>
+
+    <h4>版本与更新</h4>
+    <p class="help-meta">当前版本 <code>v{{ app_version }}</code> ·
+      <button class="btn tiny" id="btn-check-update" type="button">检查更新</button></p>
+    <p class="help-meta">许可证 <a href="https://github.com/ui2512/OrthoPlot/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">GPL-3.0</a> ·
+      源码 <a href="https://github.com/ui2512/OrthoPlot" target="_blank" rel="noopener noreferrer">GitHub</a> /
+      <a href="https://gitcode.com/ui2512/OrthoPlot" target="_blank" rel="noopener noreferrer">GitCode</a></p>
   </div>
 </div>
 
