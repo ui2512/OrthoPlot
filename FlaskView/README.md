@@ -3,7 +3,7 @@
 Android 应用：APK 内置 Python 3.14 运行时（[Chaquopy](https://chaquo.com/chaquopy)），
 打开应用即在**本机进程内**启动 Flask 网站（函数图像绘制），然后用任意浏览器访问
 `http://127.0.0.1:5000`。
-**单 APK、装上即用、全程离线，无需安装 Termux。**
+**单 APK、装上即用、日常离线，无需安装 Termux；联网时会自动检查新版本。**
 网站运行在**前台服务**中常驻保活：首次打开会自动弹出通知权限（Android 13+）与
 电池优化白名单的系统授权框（各点一次“允许”即可，系统不允许静默授予），
 之后通知栏可随时查看服务状态、一键重启或关闭。
@@ -94,6 +94,16 @@ Chaquopy 在构建期用它做 pip 依赖解析与字节码预编译，且版本
   （桌面默认关闭，移动鼠标即可读数）；
 - 界面适配竖屏 / 横屏 / 折叠屏（见下）；函数与视野自动保存在本机，顶栏"💾保存 / 📂打开"可把
   工作区存成 `.json` 文件或从文件恢复（可跨设备）。
+- **自动更新检测**：启动时读取 GitHub / GitCode 的 `version.json`，有新版时弹窗；主界面提供
+  “检查更新”和 “GPL-3.0 · 查看源码”入口，更新检查失败时静默，不影响本地使用。
+
+### 自动更新与版本号
+
+- 原生端 `UpdateChecker.kt` 在应用回到前台时检查一次（6 小时内不重复），GitHub 优先、
+  GitCode 兜底；发现更高版本时弹窗，可跳转下载或忽略该版本。
+- Web 端读取同一份清单，在页面顶部显示更新提示条；使用说明里可手动检查。
+- 发布新版本时同步修改三处：`app/build.gradle.kts` 的 `versionName`、
+  Python 的 `APP_VERSION`、仓库根目录 `version.json` 的 `version` / `notes` / `downloads`。
 
 ### 多形态适配（竖屏 / 横屏 / 折叠屏）
 
@@ -139,3 +149,9 @@ Chaquopy 在构建期用它做 pip 依赖解析与字节码预编译，且版本
 | 启动超时 | 慢设备首次启动更久；可从通知栏“重启服务”或重开应用重试；多次失败可用 `adb logcat -s python.stderr python.stdout` 排查 |
 | 仍被系统杀后台 | 确认已允许电池优化白名单；个别国产 ROM（小米 / 华为等）还需在其系统设置中允许“自启动”与“后台运行”；被杀后 START_STICKY 会自动拉起，重新打开应用也会自动恢复 |
 | pip 依赖安装失败 | 构建机 python3.14 版本不匹配，或包无 Android 可用 wheel（见 Chaquopy FAQ） |
+
+## 许可证
+
+本项目使用 GNU General Public License v3.0（GPL-3.0）发布，详见 [LICENSE](../LICENSE)。
+
+Copyright (C) 2026 ui2512

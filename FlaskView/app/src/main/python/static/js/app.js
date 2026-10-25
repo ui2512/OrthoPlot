@@ -40,6 +40,12 @@
     tableScroll: $('#table-scroll'),
     help: $('#help-modal'),
     export: $('#export-modal'),
+    updateBanner: $('#update-banner'),
+    updateVersion: $('#update-version'),
+    updateNotes: $('#update-notes'),
+    updateLink: $('#update-link'),
+    updateDismiss: $('#update-dismiss'),
+    checkUpdate: $('#btn-check-update'),
   };
 
   const plot = new Plotter($('#plot'));
@@ -87,6 +93,67 @@
   function setHint(text, type) {
     el.hint.textContent = text || '';
     el.hint.className = 'hint' + (type ? ' ' + type : '');
+  }
+
+  /* ============================================================
+     自动更新检测
+     ============================================================ */
+
+  const UPDATE_DISMISS_KEY = 'orthoplot.update.dismissed';
+  const UPDATE_LAST_KEY = 'orthoplot.update.last-check';
+  const UPDATE_INTERVAL = 6 * 60 * 60 * 1000;
+
+  function updateStorageGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+
+  function updateStorageSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* 隐私模式写入失败时忽略 */ }
+  }
+
+  function showUpdateBanner(data) {
+    const latest = String(data.latest || '').trim();
+    if (!latest) return;
+    el.updateVersion.textContent = 'v' + latest;
+    el.updateNotes.textContent = String(data.notes || '').trim();
+    const downloads = (data.downloads && typeof data.downloads === 'object') ? data.downloads : {};
+    // Android 浏览器优先给 APK / Android 分支；桌面浏览器给 Web 仓库
+    const isAndroid = /Android/i.test(navigator.userAgent || '');
+    const url = (isAndroid && downloads.android) || downloads.web || data.url || '';
+    if (url) {
+      el.updateLink.href = url;
+      el.updateLink.hidden = false;
+    } else {
+      el.updateLink.hidden = true;
+    }
+    el.updateBanner.hidden = false;
+  }
+
+  async function checkForUpdates(manual) {
+    const now = Date.now();
+    const last = Number(updateStorageGet(UPDATE_LAST_KEY) || 0);
+    if (!manual && now - last < UPDATE_INTERVAL) return;
+    let data = null;
+    try {
+      const res = await fetch('/api/update-check' + (manual ? '?force=1' : ''), {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+      if (res.ok) data = await res.json();
+    } catch (e) {
+      // 离线 / 后端未启动：自动检查静默，手动检查给出提示
+    }
+    if (!data || !data.ok) {
+      if (manual) toast('检查更新失败，请检查网络');
+      return;
+    }
+    updateStorageSet(UPDATE_LAST_KEY, String(now));
+    if (!data.has_update) {
+      if (manual) toast('已是最新版本 v' + data.current);
+      return;
+    }
+    if (!manual && updateStorageGet(UPDATE_DISMISS_KEY) === String(data.latest)) return;
+    showUpdateBanner(data);
   }
 
   /* ============================================================
@@ -1213,6 +1280,21 @@
       if (e.target === el.help) el.help.classList.remove('open');
     });
 
+    // 更新提示：关闭本次提示只记住当前版本，后续版本仍会再次提醒
+    if (el.updateDismiss) {
+      el.updateDismiss.addEventListener('click', () => {
+        const latest = (el.updateVersion.textContent || '').replace(/^v/, '');
+        if (latest) updateStorageSet(UPDATE_DISMISS_KEY, latest);
+        el.updateBanner.hidden = true;
+      });
+    }
+    if (el.checkUpdate) {
+      el.checkUpdate.addEventListener('click', () => {
+        el.help.classList.remove('open');
+        checkForUpdates(true);
+      });
+    }
+
     // 画布事件
     plot.on('hover', (h) => {
       if (!h || !h.values || !h.values.length) {
@@ -1285,6 +1367,8 @@
       }, 60);
     }
     window.addEventListener('resize', () => setTimeout(() => plot.resize(), 60));
+    // 延迟检查，避免和首屏绘图 / 引擎预热抢资源；失败静默
+    setTimeout(() => checkForUpdates(false), 1500);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

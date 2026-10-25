@@ -17,16 +17,20 @@ app.py —— OrthoPlot（正绘）后端（Flask，函数图像绘制网站）
     POST /api/tangent          求过指定点的切线（切点 + 斜率）
     POST /api/integral         数值计算定积分（辛普森法）
     GET  /api/health           健康检查
+    GET  /api/update-check     检查是否有新版本（GitHub / GitCode，失败静默）
 """
 
 from __future__ import annotations
 
 import argparse
 import importlib
+import json
 import math
 import os
+import re
 import threading
 import time
+import urllib.request
 
 from flask import Flask, jsonify, render_template, request
 
@@ -74,6 +78,110 @@ def warm_engine() -> None:
         _ = parsed.latex
     except Exception:  # noqa: BLE001 —— 预热失败不影响正常请求
         pass
+
+# --------------------------------------------------------------------------
+# 版本与自动更新
+# --------------------------------------------------------------------------
+# version.json 放在仓库 main 分支根目录，Web 端与 Android 端共用。
+# 发布新版本时同步修改：本文件的 APP_VERSION、Android 的 versionName、
+# 仓库根目录 version.json 的 version / notes / downloads。
+
+APP_VERSION = "1.1.0"
+PROJECT_URL = "https://github.com/ui2512/OrthoPlot"
+MIRROR_URL = "https://gitcode.com/ui2512/OrthoPlot"
+
+# GitHub 优先，GitCode 镜像兜底；可用环境变量覆盖（本地测试 / 自建镜像）。
+UPDATE_MANIFEST_URLS = tuple(
+    url.strip()
+    for url in os.environ.get(
+        "ORTHOPLOT_UPDATE_MANIFEST_URLS",
+        "https://raw.githubusercontent.com/ui2512/OrthoPlot/main/version.json,"
+        "https://raw.gitcode.com/ui2512/OrthoPlot/raw/main/version.json",
+    ).split(",")
+    if url.strip()
+)
+UPDATE_CHECK_TTL = 6 * 3600
+UPDATE_CHECK_FAIL_TTL = 600
+UPDATE_FETCH_TIMEOUT = 3.0
+UPDATE_MAX_BYTES = 64 * 1024
+
+_VERSION_RE = re.compile(r"^v?(\d+(?:\.\d+){0,3})$")
+_update_lock = threading.Lock()
+_update_cache: dict = {"at": 0.0, "ok": False, "data": None}
+
+
+def _parse_version(value) -> tuple[int, ...] | None:
+    """把 1.2.3 之类的版本号转成可比较的元组；非法版本返回 None。"""
+    match = _VERSION_RE.match(str(value or "").strip())
+    if not match:
+        return None
+    parts = [int(part) for part in match.group(1).split(".")]
+    while len(parts) < 4:
+        parts.append(0)
+    return tuple(parts[:4])
+
+
+def _valid_url(value) -> str:
+    if not isinstance(value, str):
+        return ""
+    value = value.strip()
+    return value if value.startswith(("https://", "http://")) else ""
+
+
+def _fetch_update_manifest() -> dict | None:
+    """按顺序拉取更新清单；全部失败返回 None（离线时静默）。"""
+    for url in UPDATE_MANIFEST_URLS:
+        try:
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "User-Agent": f"OrthoPlot/{APP_VERSION}",
+                    "Accept": "application/json",
+                },
+            )
+            with urllib.request.urlopen(req, timeout=UPDATE_FETCH_TIMEOUT) as resp:
+                raw = resp.read(UPDATE_MAX_BYTES + 1)
+            if len(raw) > UPDATE_MAX_BYTES:
+                continue
+            data = json.loads(raw.decode("utf-8-sig"))
+            if not isinstance(data, dict):
+                continue
+            latest = str(data.get("version") or "").strip()
+            if _parse_version(latest) is None:
+                continue
+            downloads = data.get("downloads")
+            downloads = downloads if isinstance(downloads, dict) else {}
+            clean_downloads = {}
+            for key in ("web", "android"):
+                value = _valid_url(downloads.get(key))
+                if value:
+                    clean_downloads[key] = value
+            return {
+                "version": latest,
+                "released": str(data.get("released") or "")[:32],
+                "notes": str(data.get("notes") or "")[:600],
+                "url": _valid_url(data.get("url")) or PROJECT_URL,
+                "downloads": clean_downloads,
+                "source": url,
+            }
+        except Exception:  # noqa: BLE001 —— 网络 / JSON / 证书问题都按检查失败处理
+            continue
+    return None
+
+
+def _update_info(force: bool = False) -> dict | None:
+    """带缓存的更新检查：成功缓存 6 小时，失败缓存 10 分钟。"""
+    now = time.time()
+    with _update_lock:
+        age = now - _update_cache["at"]
+        ttl = UPDATE_CHECK_TTL if _update_cache["ok"] else UPDATE_CHECK_FAIL_TTL
+        if not force and _update_cache["at"] and age < ttl:
+            return _update_cache["data"]
+    data = _fetch_update_manifest()
+    with _update_lock:
+        _update_cache.update({"at": time.time(), "ok": data is not None, "data": data})
+    return data
+
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
@@ -142,7 +250,7 @@ def _cache_put(key: tuple, value: dict) -> None:
 
 @app.get("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", app_version=APP_VERSION)
 
 
 @app.get("/api/presets")
@@ -153,7 +261,41 @@ def api_presets():
 
 @app.get("/api/health")
 def api_health():
-    return jsonify({"ok": True, "engine": "sympy", "version": "1.0"})
+    return jsonify({"ok": True, "engine": "sympy", "version": APP_VERSION})
+
+
+@app.get("/api/update-check")
+def api_update_check():
+    """检查远端 version.json；离线或两个地址都失败时返回 ok=false，不报错。"""
+    info = _update_info(force=request.args.get("force") == "1")
+    current = _parse_version(APP_VERSION)
+    if info is None:
+        resp = jsonify({
+            "ok": False,
+            "current": APP_VERSION,
+            "latest": None,
+            "has_update": False,
+            "notes": "",
+            "url": PROJECT_URL,
+            "downloads": {},
+        })
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
+    latest = _parse_version(info["version"])
+    resp = jsonify({
+        "ok": True,
+        "current": APP_VERSION,
+        "latest": info["version"],
+        "has_update": bool(current and latest and latest > current),
+        "released": info.get("released", ""),
+        "notes": info.get("notes", ""),
+        "url": info.get("url", PROJECT_URL),
+        "downloads": info.get("downloads", {}),
+        "source": info.get("source", ""),
+    })
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 # --------------------------------------------------------------------------

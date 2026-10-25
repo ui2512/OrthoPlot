@@ -18,6 +18,18 @@
     <string name="lan_off">当前仅本机可访问。打开开关后，同一 Wi-Fi 下的设备也能用浏览器访问。</string>
     <string name="lan_no_ip">已允许局域网访问，但尚未获取到局域网地址，请连接 Wi-Fi 后返回本页面。</string>
 
+    <!-- 更新与许可 -->
+    <string name="btn_check_update">检查更新</string>
+    <string name="about_source">GPL-3.0 · 查看源码</string>
+    <string name="update_title">发现新版本 %1$s</string>
+    <string name="update_message">有可用的新版本，是否前往下载？</string>
+    <string name="update_now">前往更新</string>
+    <string name="update_later">稍后</string>
+    <string name="update_ignore">忽略此版本</string>
+    <string name="update_latest">已是最新版本</string>
+    <string name="update_failed">检查更新失败，请检查网络</string>
+    <string name="open_link_failed">未找到可用的浏览器</string>
+
     <!-- 前台服务通知（状态查看 + 重启 / 关闭） -->
     <string name="notif_channel_name">服务状态</string>
     <string name="notif_channel_desc">显示本地网站服务的运行状态，提供“重启服务 / 关闭服务”按钮</string>

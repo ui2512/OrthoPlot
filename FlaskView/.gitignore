@@ -3,6 +3,10 @@
 build/
 app/build/
 
+# Python
+__pycache__/
+*.py[cod]
+
 # Android Studio / IDE
 .idea/
 *.iml

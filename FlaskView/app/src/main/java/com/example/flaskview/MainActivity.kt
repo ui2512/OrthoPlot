@@ -18,6 +18,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
@@ -38,7 +39,7 @@ import androidx.core.content.ContextCompat
  * 局域网 IP，同一 Wi-Fi 下的设备即可用浏览器访问。切换由 ServerController
  * 热切换完成（werkzeug make_server 的优雅停机），无需杀进程。
  *
- * 界面控件用 findViewById 而非 ViewBinding：仅 6 个控件， findViewById 不依赖
+ * 界面控件用 findViewById 而非 ViewBinding：仅 8 个控件， findViewById 不依赖
  * 生成代码，在受限环境（如 Termux 端构建）下更稳。
  *
  * 首次启动需解压 Python 运行时并导入依赖（sympy 较大），慢设备上约十几秒；
@@ -50,6 +51,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOpen: Button
     private lateinit var swLan: SwitchCompat
     private lateinit var tvLan: TextView
+    private lateinit var tvCheckUpdate: TextView
+    private lateinit var tvSource: TextView
+    private var updateDialogShowing = false
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val prefs: SharedPreferences by lazy {
@@ -75,11 +79,15 @@ class MainActivity : AppCompatActivity() {
         btnOpen = findViewById(R.id.btn_open)
         swLan = findViewById(R.id.sw_lan)
         tvLan = findViewById(R.id.tv_lan)
+        tvCheckUpdate = findViewById(R.id.tv_check_update)
+        tvSource = findViewById(R.id.tv_source)
 
         ServerController.attach(applicationContext)
         ServerController.addListener(stateListener)
 
         btnOpen.setOnClickListener { openBrowser() }
+        tvCheckUpdate.setOnClickListener { checkForUpdates(manual = true) }
+        tvSource.setOnClickListener { openUrl("https://github.com/ui2512/OrthoPlot") }
 
         // 先设初值再挂监听，避免触发一次无谓的回调
         swLan.isChecked = prefs.getBoolean(ServerController.KEY_LAN, false)
@@ -100,6 +108,8 @@ class MainActivity : AppCompatActivity() {
         updateLanInfo()
         // 覆盖“进程被杀后重新打开 / 用户在通知栏关闭后又打开应用”的场景
         startServerFlow()
+        // 每 6 小时最多检查一次；离线时静默
+        checkForUpdates(manual = false)
     }
 
     override fun onDestroy() {
@@ -182,6 +192,55 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.lan_no_ip)
         } else {
             ips.joinToString("\n") { "其他设备访问：http://$it:${ServerController.SERVER_PORT}" }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // 自动更新
+    // ------------------------------------------------------------------
+
+    private fun checkForUpdates(manual: Boolean) {
+        UpdateChecker.checkAsync(this, manual) { result ->
+            if (isFinishing || isDestroyed) return@checkAsync
+            when (result) {
+                is UpdateChecker.Result.Available -> showUpdateDialog(result.info)
+                UpdateChecker.Result.UpToDate -> if (manual) {
+                    Toast.makeText(this, R.string.update_latest, Toast.LENGTH_SHORT).show()
+                }
+                UpdateChecker.Result.Failed -> if (manual) {
+                    Toast.makeText(this, R.string.update_failed, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun showUpdateDialog(info: UpdateChecker.UpdateInfo) {
+        if (updateDialogShowing || isFinishing || isDestroyed) return
+        updateDialogShowing = true
+        val message = buildString {
+            append(getString(R.string.update_message))
+            if (info.notes.isNotBlank()) {
+                append("\n\n").append(info.notes)
+            }
+        }
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.update_title, info.version))
+            .setMessage(message)
+            .setPositiveButton(R.string.update_now) { _, _ -> openUrl(info.downloadUrl) }
+            .setNegativeButton(R.string.update_later, null)
+            .setNeutralButton(R.string.update_ignore) { _, _ ->
+                UpdateChecker.ignore(this, info.version)
+            }
+            .setOnDismissListener { updateDialogShowing = false }
+            .show()
+    }
+
+    private fun openUrl(url: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (e: Exception) {
+            Log.w(TAG, "无法打开链接：$url", e)
+            Toast.makeText(this, R.string.open_link_failed, Toast.LENGTH_LONG).show()
         }
     }
 
