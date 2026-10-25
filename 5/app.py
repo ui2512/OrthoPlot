@@ -96,7 +96,7 @@ UPDATE_MANIFEST_URLS = tuple(
     for url in os.environ.get(
         "ORTHOPLOT_UPDATE_MANIFEST_URLS",
         "https://raw.githubusercontent.com/ui2512/OrthoPlot/main/version.json,"
-        "https://raw.gitcode.com/ui2512/OrthoPlot/raw/main/version.json",
+        "https://raw.gitcode.com/ui2512/OrthoPlot/raw/main/version.txt",
     ).split(",")
     if url.strip()
 )
