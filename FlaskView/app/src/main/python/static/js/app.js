@@ -13,6 +13,10 @@
 
   const $ = (sel) => document.querySelector(sel);
 
+  const DEFAULT_WIDTH = 2.4; // 曲线默认线宽（CSS 像素）
+  const MIN_WIDTH = 1;
+  const MAX_WIDTH = 6;
+
   const state = {
     functions: [],
     colorIndex: 0,
@@ -180,6 +184,7 @@
       id: 'fn' + (++state.seq),
       expr: text,
       color: nextColor(),
+      width: DEFAULT_WIDTH,
       visible: true,
       params: Object.assign({}, params || {}),
       paramList: [],
@@ -412,6 +417,7 @@
           segments: f.segments,
           label: 'y = ' + prettyExpr(f.expr),
           visible: f.visible,
+          width: f.width || DEFAULT_WIDTH,
         });
         // 导数曲线：虚线、同色，hover 取值同样可用
         if (f.showDerivative && f.dsegments && f.dsegments.length) {
@@ -422,7 +428,7 @@
             label: "y′ = " + prettyExpr(f.expr),
             visible: true,
             dashed: true,
-            width: 1.6,
+            width: Math.max(1, +((f.width || DEFAULT_WIDTH) * 0.66).toFixed(1)),
             isDerivative: true,
           });
         }
@@ -590,6 +596,7 @@
         c: f.color,
         v: f.visible ? 1 : 0,
         d: f.showDerivative ? 1 : 0,
+        w: f.width || DEFAULT_WIDTH,
       })),
       view: { cx: plot.view.cx, cy: plot.view.cy, s: plot.view.scale },
       theme: document.documentElement.getAttribute('data-theme'),
@@ -614,6 +621,7 @@
         error: '',
         expanded: false,
         showDerivative: !!sf.d,
+        width: Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Number(sf.w) || DEFAULT_WIDTH)),
         _fresh: false,
       });
     });
@@ -765,7 +773,7 @@
           row.className = 'param-row';
           row.innerHTML =
             '<span class="param-name">' + escapeHtml(name) + '</span>' +
-            '<input type="range" min="-10" max="10" step="0.1" value="' + value + '">' +
+            '<input type="range" min="-10" max="10" step="0.1" value="' + escapeHtml(value) + '">' +
             '<span class="param-value">' + fmtNum(value, 4) + '</span>';
           const slider = row.querySelector('input');
           const label = row.querySelector('.param-value');
@@ -779,6 +787,29 @@
           });
           box.appendChild(row);
         });
+        li.appendChild(box);
+      }
+
+      // 曲线线宽
+      if (!f.error) {
+        const box = document.createElement('div');
+        box.className = 'fn-width';
+        const row = document.createElement('div');
+        row.className = 'param-row';
+        row.innerHTML =
+          '<span class="param-name">粗细</span>' +
+          '<input type="range" min="' + MIN_WIDTH + '" max="' + MAX_WIDTH + '" step="0.1" value="' + (f.width || DEFAULT_WIDTH) + '">' +
+          '<span class="param-value">' + Number((f.width || DEFAULT_WIDTH).toFixed(1)) + '</span>';
+        const slider = row.querySelector('input');
+        const label = row.querySelector('.param-value');
+        slider.title = '该曲线的线宽（1–6 px）';
+        slider.addEventListener('input', () => {
+          f.width = parseFloat(slider.value);
+          label.textContent = Number(f.width.toFixed(1));
+          drawCurves();
+          scheduleSave();
+        });
+        box.appendChild(row);
         li.appendChild(box);
       }
 
@@ -1177,7 +1208,11 @@
       exportW.select();
     };
 
-    const closeExport = () => el.export.classList.remove('open');
+    const closeExport = () => {
+      // 导出中关闭对话框 = 取消，避免后台继续占用内存
+      if (exportAbort.ctrl) exportAbort.ctrl.abort();
+      el.export.classList.remove('open');
+    };
 
     const applyExportPreset = (name) => {
       const [nw, nh] = exportNative();
@@ -1189,13 +1224,33 @@
         '4k': [3840, 2160],
         '5k': [5120, 2880],
         '8k': [7680, 4320],
-        '100mp': [10000, 10000],
+        '400mp': [20000, 20000],
       };
       const p = presets[name];
       if (p) {
         exportW.value = p[0];
         exportH.value = p[1];
       }
+    };
+
+    /** 导出进度显示在对话框里：绘制 / 编码两阶段共用一条进度条 */
+    const exportProgress = { el: $('#export-progress'), bar: $('#export-progress-bar'), text: $('#export-progress-text') };
+    const exportAbort = { ctrl: null };
+
+    const showExportProgress = (p) => {
+      if (!exportProgress.el) return;
+      exportProgress.el.classList.add('show');
+      const total = Math.max(1, p.total || 1);
+      const pct = Math.max(0, Math.min(100, Math.round(((p.done || 0) / total) * 100)));
+      exportProgress.bar.style.width = pct + '%';
+      const label = p.phase === 'probe' ? '准备中…'
+        : p.phase === 'encode' ? '编码 PNG ' + pct + '%'
+        : '绘制 ' + pct + '%';
+      exportProgress.text.textContent = label;
+    };
+
+    const cancelExport = () => {
+      if (exportAbort.ctrl) exportAbort.ctrl.abort();
     };
 
     const doExport = async () => {
@@ -1206,13 +1261,18 @@
         '-' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
       confirmBtn.disabled = true;
       confirmBtn.textContent = '导出中…';
+      if (exportAbort.ctrl) exportAbort.ctrl.abort();
+      exportAbort.ctrl = window.AbortController ? new AbortController() : null;
+      showExportProgress({ phase: 'probe' });
       try {
         const res = await plot.exportPNG('OrthoPlot-' + stamp + '.png', {
           width: Math.round(Number(exportW.value)),
           height: Math.round(Number(exportH.value)),
-        });
+          signal: exportAbort.ctrl ? exportAbort.ctrl.signal : undefined,
+        }, showExportProgress);
         if (!res.ok) {
           toast(res.error || '导出失败', 3000);
+          if (res.error === '已取消导出') exportProgress.el.classList.remove('show');
           return;
         }
         closeExport();
@@ -1220,6 +1280,9 @@
       } catch (err) {
         toast('导出失败：' + (err && err.message ? err.message : err), 3000);
       } finally {
+        exportAbort.ctrl = null;
+        exportProgress.el.classList.remove('show');
+        exportProgress.bar.style.width = '0';
         confirmBtn.disabled = false;
         confirmBtn.textContent = '导出';
       }
@@ -1227,7 +1290,10 @@
 
     $('#btn-export').addEventListener('click', openExport);
     $('#btn-export-close').addEventListener('click', closeExport);
-    $('#btn-export-cancel').addEventListener('click', closeExport);
+    $('#btn-export-cancel').addEventListener('click', () => {
+      if (exportAbort.ctrl) cancelExport();
+      else closeExport();
+    });
     $('#btn-export-confirm').addEventListener('click', doExport);
     el.export.addEventListener('click', (e) => {
       if (e.target === el.export) closeExport();

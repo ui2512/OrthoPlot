@@ -87,7 +87,7 @@ def warm_engine() -> None:
 # 发布新版本时同步修改：本文件的 APP_VERSION、Android 的 versionName、
 # 仓库根目录 version.json 的 version / notes / downloads。
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 PROJECT_URL = "https://github.com/ui2512/OrthoPlot"
 MIRROR_URL = "https://gitcode.com/ui2512/OrthoPlot"
 

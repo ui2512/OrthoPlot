@@ -144,7 +144,8 @@
 
     <h4>参数函数</h4>
     <p>表达式里除了 <code>x</code> 以外的字母（如 <code>a</code>、<code>b</code>、<code>k</code>）都会自动变成参数，
-      下方出现滑块，拖动即可实时观察图像变化。例如输入 <code>a*x^2+b*x+c</code> 或 <code>kx+b</code>。</p>
+      下方出现滑块，拖动即可实时观察图像变化。例如输入 <code>a*x^2+b*x+c</code> 或 <code>kx+b</code>。
+      每张函数卡片下方还有一个 <b>粗细</b> 滑块，可单独调整该曲线的线宽（1–6 px），导数虚线按相同比例变化。</p>
 
     <h4>画布操作</h4>
     <ul>
@@ -164,10 +165,10 @@
        方便换设备继续使用；不保存时状态也会自动保存在本机，下次打开自动恢复。</p>
 
     <h4>导出图片</h4>
-    <p>工具栏 <b>⬇</b> 打开导出对话框：可选“当前尺寸 / 2× / 1080p / 1440p / 4K / 5K / 8K / 1 亿像素”，
-      也可直接输入任意宽高（只限制总像素约 1.08 亿，单边不设固定上限，实际受浏览器画布上限约束）。导出会按所选分辨率
-      <b>重新绘制</b>而不是放大截图，文字和线条保持清晰；长宽比与画布不同时，
-      画面按目标比例拉伸，保证完整视野。</p>
+    <p>工具栏 <b>⬇</b> 打开导出对话框：可选“当前尺寸 / 2× / 1080p / 1440p / 4K / 5K / 8K / 4 亿像素”，
+      也可直接输入任意宽高（总像素上限 4 亿，单边最多 65535）。导出会按所选分辨率 <b>重新绘制</b>而不是放大截图，
+      文字和线条保持清晰；浏览器单张画布装不下时自动分条渲染再拼接，导出的仍是完整的单张 PNG。
+      长宽比与画布不同时，画面按目标比例拉伸，保证完整视野。</p>
 
     <h4>触屏与光标模式</h4>
     <p>手机 / 平板打开时会自动进入<b>光标模式</b>（工具栏 <b>光标</b> 按钮高亮）：手指按住画布拖动，
@@ -211,13 +212,17 @@
       <button class="btn tiny" data-export-preset="4k">3840×2160</button>
       <button class="btn tiny" data-export-preset="5k">5120×2880</button>
       <button class="btn tiny" data-export-preset="8k">7680×4320</button>
-      <button class="btn tiny" data-export-preset="100mp">10000×10000（1 亿）</button>
+      <button class="btn tiny" data-export-preset="400mp">20000×20000（4 亿）</button>
     </div>
     <div class="export-fields">
       <label>宽度 <input id="export-width" type="number" inputmode="numeric" min="100" step="1"> px</label>
       <label>高度 <input id="export-height" type="number" inputmode="numeric" min="100" step="1"> px</label>
     </div>
-    <p class="export-hint">上限：只限制总像素约 1 亿（最高 1.08 亿），单边不设固定上限，实际受浏览器画布上限约束。1 亿像素导出需要数秒到数十秒，手机端受内存限制，失败时会给出提示。长宽比与画布不同时会按目标比例拉伸，保证完整视野。</p>
+    <p class="export-hint">上限：总像素 4 亿，单边最多 65535 像素（PNG 格式限制）。单张画布装得下时整张绘制，装不下会自动分条绘制再拼成一张完整的 PNG；4 亿像素需要 GB 级内存与较长时间，手机端可能失败并给出提示。长宽比与画布不同时会按目标比例拉伸，保证完整视野。</p>
+    <div class="export-progress" id="export-progress">
+      <div class="export-progress-track"><div class="export-progress-bar" id="export-progress-bar"></div></div>
+      <span class="export-progress-text" id="export-progress-text">准备中…</span>
+    </div>
     <div class="export-actions">
       <button class="btn" id="btn-export-cancel">取消</button>
       <button class="btn primary" id="btn-export-confirm">导出</button>
@@ -226,6 +231,8 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/mathrender.js') }}?v={{ STATIC_V }}"></script>
+<script src="{{ url_for('static', filename='js/png-encode.js') }}?v={{ STATIC_V }}"></script>
+<script src="{{ url_for('static', filename='js/export-tiles.js') }}?v={{ STATIC_V }}"></script>
 <script src="{{ url_for('static', filename='js/plot.js') }}?v={{ STATIC_V }}"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}?v={{ STATIC_V }}"></script>
 </body>

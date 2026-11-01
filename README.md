@@ -4,17 +4,14 @@
 
 本分支只包含 Android 工程源码；预编译 APK 放在 Releases，不再单独占用分支。
 
-- `FlaskView/` — 工程源码（1.1.0）与构建脚本，包含原生自动更新检测
-- 预编译 APK：[`v1.0.0-android` Release](https://github.com/ui2512/OrthoPlot/releases/tag/v1.0.0-android)
-  - 文件：`OrthoPlot-1.0.0-android-arm64.apk`（arm64-v8a）
-  - SHA-256：`b8f5eb28cad6b7538ca41df036402fe5d71b11c0ec5a75157d17fe9506559342`
+- `FlaskView/` — 工程源码（1.2.0）与构建脚本，包含原生自动更新检测
+- 预编译 APK：[`v1.2.0` Release](https://github.com/ui2512/OrthoPlot/releases/tag/v1.2.0)
+  - 文件：`OrthoPlot-1.2.0-android-arm64.apk`（arm64-v8a）
 
-Linux / Windows 安装包见 [`v1.1.0` Release](https://github.com/ui2512/OrthoPlot/releases/tag/v1.1.0)。
+Linux / Windows 安装包见 [`v1.2.0` Release](https://github.com/ui2512/OrthoPlot/releases/tag/v1.2.0)。
 
-说明：该 APK 构建于项目定名和 1.1.0 源码之前，安装后应用内名称仍为「函数图像」，
-且不含自动更新检测、AI 生成声明与第三方许可证文件。重新执行 `FlaskView/build.sh`
-后会得到 1.1.0 APK（应用名「正绘」，启动时自动检查新版本，主界面带 AI / GPL 入口），
-届时可替换 Release 资产。
+说明：1.2.0 APK 由本分支源码构建，应用名「正绘」，含自动更新检测、AI 生成声明、
+第三方许可证入口与超大 PNG 导出等功能。
 
 安装后打开应用，等待「服务已启动 ✓」，点「在浏览器中打开」，或手动访问 <http://127.0.0.1:5000>。
 

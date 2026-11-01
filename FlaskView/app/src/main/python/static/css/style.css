@@ -793,3 +793,44 @@ table.data-table tbody tr:hover { background: var(--surface-2); }
   color: var(--text-faint);
 }
 .modal .help-meta .btn { vertical-align: middle; }
+
+.export-progress {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 14px;
+}
+
+.export-progress.show { display: flex; }
+
+.export-progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.export-progress-bar {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width .15s linear;
+}
+
+.export-progress-text {
+  min-width: 96px;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* 曲线粗细滑块 */
+.fn-width { margin-top: 9px; }
+.fn-width .param-row { grid-template-columns: 32px 1fr 52px; }
+.fn-width .param-name { font-style: normal; letter-spacing: .5px; }
+@media (max-width: 720px) {
+  .fn-width .param-row { grid-template-columns: 30px 1fr 48px; }
+}

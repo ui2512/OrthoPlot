@@ -211,10 +211,12 @@
       const C = this._colors();
 
       ctx.save();
-      ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-      ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = C.bg;
-      ctx.fillRect(0, 0, W, H);
+      ctx.setTransform(this.dpr, 0, 0, this.dpr, this._ox || 0, this._oy || 0);
+      if (!this._noClear) {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = C.bg;
+        ctx.fillRect(0, 0, W, H);
+      }
 
       const range = this.getRange();
       const ticks = this._computeTicks(range);
@@ -975,126 +977,126 @@
 
     /** 导出 PNG
      *  opts.width / opts.height：目标像素尺寸（省略则用当前画布原生像素）。
-     *  做法是在离屏画布上按目标分辨率重绘（不是放大截图）：文字、线宽随
-     *  分辨率等比放大；长宽比与当前画布不同时，画面按目标比例拉伸（与
-     *  调整窗口大小同理），保证完整视野。
-     *  返回 Promise<{ ok:true, width, height } | { ok:false, error }>。
-     *  1 亿像素级导出需要几百 MB 内存，手机端可能较慢，失败时会给出提示。
+     *  opts.signal：可选 AbortSignal，用于取消
+     *  onProgress({ phase, done, total })：绘制 / 编码进度
+     *  按目标分辨率重新绘制（不是放大截图）：文字、线宽等比放大；长宽比与
+     *  当前画布不同时按目标比例拉伸。整幅画布装得下就整张绘制，装不下由
+     *  ExportTiles 自动分条渲染再编码成一张 PNG。
+     *  返回 Promise<{ ok:true, width, height, blob } | { ok:false, error }>。
      */
-    exportPNG(filename, opts) {
-      return new Promise((resolve) => {
+    exportPNG(filename, opts, onProgress) {
+      return Promise.resolve().then(() => {
         opts = opts || {};
-        // 手机与桌面统一支持 1 亿像素级导出；只限制总像素，单边大小交给
-        // 浏览器画布上限决定（分配后校验实际尺寸），失败时返回明确错误。
-        const MAX_PIXELS = 108 * 1000 * 1000; // 1.08 亿，覆盖 10000×10000 与 12000×9000
+        // 总像素上限 4 亿；单边另有 PNG 格式的 65535 限制。
+        const MAX_PIXELS = 400 * 1000 * 1000; // 4 亿，覆盖 20000×20000
         const cssW = Math.max(1, this.width);
         const cssH = Math.max(1, this.height);
+        const report = (p) => {
+          if (typeof onProgress !== 'function') return;
+          try { onProgress(p); } catch (err) { /* 进度回调出错不影响导出 */ }
+        };
 
         let W = Math.round(Number(opts.width) || cssW * this.dpr);
         let H = Math.round(Number(opts.height) || cssH * this.dpr);
-        if (!(W >= 100 && H >= 100)) return resolve({ ok: false, error: '分辨率太小（至少 100×100）' });
+        if (!(W >= 100 && H >= 100)) return { ok: false, error: '分辨率太小（至少 100×100）' };
+        if (W > 65535 || H > 65535) return { ok: false, error: '单边不能超过 65535 像素' };
         if (W * H > MAX_PIXELS) {
-          return resolve({ ok: false, error: '总像素过大（上限约 1.08 亿像素）' });
+          return { ok: false, error: '总像素过大（上限 4 亿像素）' };
         }
 
         // 每 CSS 像素对应的导出像素数：横向比例与屏幕一致，文字/线宽等比放大
         const scale = Math.max(W / cssW, 0.05);
-        const off = document.createElement('canvas');
-        off.width = W;
-        off.height = H;
-        if (off.width !== W || off.height !== H) {
-          off.width = 0;
-          off.height = 0;
-          return resolve({ ok: false, error: '当前浏览器不支持该画布尺寸（单边过大），请降低宽高' });
-        }
-        let octx;
-        try {
-          octx = off.getContext('2d');
-        } catch (err) {
-          octx = null;
-        }
-        if (!octx) {
-          off.width = 0;
-          off.height = 0;
-          return resolve({ ok: false, error: '无法创建导出画布（分辨率可能过高）' });
-        }
-
-        // 临时把绘制目标切到离屏画布（draw() 全部依赖 this.* 状态）
-        const bak = {
-          canvas: this.canvas, ctx: this.ctx,
-          width: this.width, height: this.height,
-          dpr: this.dpr, hover: this.hover,
-        };
-        this.canvas = off;
-        this.ctx = octx;
-        this.dpr = scale;
-        this.width = W / scale;
-        this.height = H / scale;
-        this.hover = null; // 导出图中不含光标十字线
-        try {
-          this.draw();
-          octx.getImageData(0, 0, 1, 1); // 部分设备画布分配失败时不会抛错，用一次读回确认真实可用
-        } catch (err) {
-          off.width = 0;
-          off.height = 0;
-          return resolve({ ok: false, error: '导出绘制失败（可能是分辨率过高或内存不足）' });
-        } finally {
-          this.canvas = bak.canvas;
-          this.ctx = bak.ctx;
-          this.width = bak.width;
-          this.height = bak.height;
-          this.dpr = bak.dpr;
-          this.hover = bak.hover;
-        }
-
         const name = filename || 'OrthoPlot.png';
-        const save = (href) => {
-          const a = document.createElement('a');
-          a.href = href;
-          a.download = name;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        };
-        const finish = () => {
-          off.width = 0;
-          off.height = 0;
-        };
-        if (off.toBlob) {
-          // toBlob 比 toDataURL 省内存（高分辨率尤其明显）
-          try {
-            off.toBlob((blob) => {
-              if (!blob) {
-                finish();
-                resolve({ ok: false, error: 'PNG 编码失败（图片过大或内存不足）' });
-                return;
-              }
-              try {
-                const url = URL.createObjectURL(blob);
-                save(url);
-                setTimeout(() => URL.revokeObjectURL(url), 4000);
-                finish();
-                resolve({ ok: true, width: W, height: H });
-              } catch (err) {
-                finish();
-                resolve({ ok: false, error: '无法保存导出文件' });
-              }
-            }, 'image/png');
-          } catch (err) {
-            finish();
-            resolve({ ok: false, error: 'PNG 编码失败（图片过大或内存不足）' });
-          }
-        } else {
-          try {
-            save(off.toDataURL('image/png'));
-            finish();
-            resolve({ ok: true, width: W, height: H });
-          } catch (err) {
-            finish();
-            resolve({ ok: false, error: 'PNG 编码失败（图片过大或内存不足）' });
-          }
-        }
+        const tiles = global.ExportTiles;
+        report({ phase: 'probe' });
+
+        const view = { x0: 0, y0: 0, dpr: scale, width: W / scale, height: H / scale };
+        return tiles.render(this, view, W, H, report, opts.signal)
+          .then((blob) => {
+            if (!blob) {
+              return { ok: false, error: 'PNG 编码失败（图片过大或内存不足）' };
+            }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 30000);
+            return { ok: true, width: W, height: H, blob };
+          }, (err) => {
+            if (err && err.cancelled) return { ok: false, error: '已取消导出' };
+            console.error(err);
+            return { ok: false, error: '导出失败：' + (err && err.message ? err.message : err) };
+          });
       });
+    }
+
+    /* ---------------- 供分块导出调用的绘图接口 ---------------- */
+
+    /**
+     * 用 ctx 把画面按 (view.dpr, view.dpr) 比例画满整块画布：坐标原点即画布
+     * 左上角，宽高为 view.width × view.height。返回所用的绘图状态。
+     */
+    _paint(ctx, view) {
+      const bak = {
+        canvas: this.canvas, ctx: this.ctx,
+        width: this.width, height: this.height,
+        dpr: this.dpr, hover: this.hover,
+        ox: this._ox, oy: this._oy, noClear: this._noClear,
+      };
+      this.canvas = ctx.canvas;
+      this.ctx = ctx;
+      this.dpr = view.dpr;
+      this.width = view.width;
+      this.height = view.height;
+      this._ox = view.ox || 0;
+      this._oy = view.oy || 0;
+      this._noClear = !!view.noClear;
+      this.hover = null; // 导出图中不含光标十字线
+      try {
+        this.draw();
+      } finally {
+        this.canvas = bak.canvas;
+        this.ctx = bak.ctx;
+        this.width = bak.width;
+        this.height = bak.height;
+        this.dpr = bak.dpr;
+        this.hover = bak.hover;
+        this._ox = bak.ox;
+        this._oy = bak.oy;
+        this._noClear = bak.noClear;
+      }
+      return bak;
+    }
+
+    /* ---------------- 分块导出接口（ExportTiles 调用） ---------------- */
+
+    /**
+     * 把整幅画面画到 ctx 上：画布是导出图中 [x1,x2]×[y1,y2] 这块像素，
+     * 通过平移让画面落在正确位置，画布边界之外的自动裁掉。
+     * noClear=true 时不清屏/不填背景（分条时背景已由调用方填过）。
+     */
+    drawExportArea(ctx, x1, x2, y1, y2, dpr, cssW, cssH, noClear) {
+      this._paint(ctx, {
+        dpr,
+        width: cssW,
+        height: cssH,
+        ox: -x1,
+        oy: -y1,
+        noClear,
+      });
+    }
+
+    /** 直接画到整幅画布上（整幅图一张画布装得下时的快速路径） */
+    drawExportDirect(ctx, dpr, cssW, cssH) {
+      this._paint(ctx, { dpr, width: cssW, height: cssH });
+    }
+
+    /** 导出背景色（PNG 没有透明区域，编码时据此只写 RGB） */
+    getExportBackground() {
+      return this._colors().bg;
     }
 
     destroy() {
