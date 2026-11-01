@@ -170,7 +170,7 @@ printf 'y\n%.0s' $(seq 1 100) | run_sdk --licenses >/dev/null 2>&1 || true
 
 if [ ! -d "$SDK_DIR/platforms/android-34" ] || [ ! -d "$SDK_DIR/build-tools/34.0.0" ]; then
   log "安装 $PLATFORM / $BUILD_TOOLS / platform-tools（首次约 200MB+，请耐心等待）..."
-  run_sdk --yes "$PLATFORM" "$BUILD_TOOLS" "platform-tools" >/dev/null
+  run_sdk "$PLATFORM" "$BUILD_TOOLS" "platform-tools" >/dev/null
 fi
 
 # ---------- 4. Gradle ----------
