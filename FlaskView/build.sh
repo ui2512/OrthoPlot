@@ -184,7 +184,7 @@ if [ ! -x "$GRADLE_BIN" ]; then
 fi
 
 # ---------- 5. local.properties ----------
-log "sdk.dir=$SDK_DIR" > "$ROOT_DIR/local.properties"
+printf 'sdk.dir=%s\n' "$SDK_DIR" > "$ROOT_DIR/local.properties"
 
 # ---------- 6. 构建 ----------
 GRADLE_ARGS=(--no-daemon -p "$ROOT_DIR")
