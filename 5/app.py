@@ -88,17 +88,17 @@ def warm_engine() -> None:
 # 仓库根目录 version.json 的 version / notes / downloads。
 
 APP_VERSION = "1.2.0"
-PROJECT_URL = "https://github.com/ui2512/OrthoPlot"
-MIRROR_URL = "https://gitcode.com/ui2512/OrthoPlot"
+PROJECT_URL = "https://gitcode.com/ui2512/OrthoPlot"
+MIRROR_URL = "https://github.com/ui2512/OrthoPlot"
 
-# GitHub 优先，GitCode 镜像兜底；可用环境变量覆盖（本地测试 / 自建镜像）。
+# GitCode 优先，GitHub 兜底；可用环境变量覆盖（本地测试 / 自建镜像）。
 UPDATE_MANIFEST_URLS = tuple(
     url.strip()
     for url in os.environ.get(
         "ORTHOPLOT_UPDATE_MANIFEST_URLS",
-        "https://raw.githubusercontent.com/ui2512/OrthoPlot/main/version.json,"
         "https://gitcode.com/api/v5/repos/ui2512/OrthoPlot/contents/version.json?ref=main,"
-        "https://raw.gitcode.com/ui2512/OrthoPlot/raw/main/version.txt",
+        "https://raw.gitcode.com/ui2512/OrthoPlot/raw/main/version.txt,"
+        "https://raw.githubusercontent.com/ui2512/OrthoPlot/main/version.json",
     ).split(",")
     if url.strip()
 )
@@ -162,11 +162,19 @@ def _fetch_update_manifest() -> dict | None:
                 value = _valid_url(downloads.get(key))
                 if value:
                     clean_downloads[key] = value
+            releases = data.get("releases")
+            releases = releases if isinstance(releases, dict) else {}
+            clean_releases = {}
+            for key in ("github", "gitcode"):
+                value = _valid_url(releases.get(key))
+                if value:
+                    clean_releases[key] = value
             return {
                 "version": latest,
                 "released": str(data.get("released") or "")[:32],
                 "notes": str(data.get("notes") or "")[:600],
                 "url": _valid_url(data.get("url")) or PROJECT_URL,
+                "releases": clean_releases,
                 "downloads": clean_downloads,
                 "source": url,
             }
@@ -283,6 +291,7 @@ def api_update_check():
             "has_update": False,
             "notes": "",
             "url": PROJECT_URL,
+            "releases": {},
             "downloads": {},
         })
         resp.headers["Cache-Control"] = "no-store"
@@ -297,6 +306,7 @@ def api_update_check():
         "released": info.get("released", ""),
         "notes": info.get("notes", ""),
         "url": info.get("url", PROJECT_URL),
+        "releases": info.get("releases", {}),
         "downloads": info.get("downloads", {}),
         "source": info.get("source", ""),
     })

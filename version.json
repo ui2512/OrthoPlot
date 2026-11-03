@@ -1,18 +1,18 @@
 {
   "version": "1.2.0",
-  "released": "2026-11-01",
-  "notes": "新增超大 PNG 导出（最高 4 亿像素，超出单张画布时自动分条渲染再拼接）；修复导出分条时的行损坏与参数注入问题。本项目由 AI 辅助生成。",
+  "released": "2026-11-02",
+  "notes": "超大 PNG 导出取消单边长度限制（仅受总像素 4 亿约束，超高自动分条、超宽自动分列后拼接）；修复导出对话框重复触发与进度显示问题；更新检查改用 GitCode 作为首选来源。本项目由 AI 辅助生成。",
   "ai_generated": true,
-  "url": "https://github.com/ui2512/OrthoPlot",
+  "url": "https://gitcode.com/ui2512/OrthoPlot",
   "releases": {
     "github": "https://github.com/ui2512/OrthoPlot/releases",
     "gitcode": "https://gitcode.com/ui2512/OrthoPlot/releases"
   },
   "downloads": {
-    "web": "https://github.com/ui2512/OrthoPlot",
-    "android": "https://github.com/ui2512/OrthoPlot/releases/download/v1.2.0/OrthoPlot-1.2.0-android-arm64.apk",
-    "linux": "https://github.com/ui2512/OrthoPlot/releases/download/v1.2.0/OrthoPlot-1.2.0-linux-amd64-arm64.tar.gz",
-    "windows": "https://github.com/ui2512/OrthoPlot/releases/download/v1.2.0/OrthoPlot-1.2.0-windows-amd64.zip"
+    "web": "https://gitcode.com/ui2512/OrthoPlot/releases",
+    "android": "https://gitcode.com/ui2512/OrthoPlot/releases",
+    "linux": "https://gitcode.com/ui2512/OrthoPlot/releases",
+    "windows": "https://gitcode.com/ui2512/OrthoPlot/releases"
   },
   "mirror": "https://gitcode.com/ui2512/OrthoPlot"
 }

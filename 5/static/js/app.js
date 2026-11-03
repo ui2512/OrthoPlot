@@ -120,14 +120,11 @@
     if (!latest) return;
     el.updateVersion.textContent = 'v' + latest;
     el.updateNotes.textContent = String(data.notes || '').trim();
+    // 更新只跳转到发行版页面，由用户在 Release 页按平台自行选择安装包
+    const releases = (data.releases && typeof data.releases === 'object') ? data.releases : {};
     const downloads = (data.downloads && typeof data.downloads === 'object') ? data.downloads : {};
-    // 按系统选择安装包：Android → APK 分支；Windows / Linux → 对应桌面包；其余 → Web 仓库
-    const ua = navigator.userAgent || '';
-    let url = '';
-    if (/Android/i.test(ua)) url = downloads.android || '';
-    else if (/Windows/i.test(ua)) url = downloads.windows || '';
-    else if (/Linux/i.test(ua)) url = downloads.linux || '';
-    url = url || downloads.web || data.url || '';
+    const url = releases.gitcode || releases.github || downloads.web || downloads.android ||
+      (data.url ? data.url.replace(/\/+$/, '') + '/releases' : '');
     if (url) {
       el.updateLink.href = url;
       el.updateLink.hidden = false;
@@ -621,7 +618,7 @@
         error: '',
         expanded: false,
         showDerivative: !!sf.d,
-        width: Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Number(sf.w) || DEFAULT_WIDTH)),
+        width: Math.round(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Number(sf.w) || DEFAULT_WIDTH)) * 10) / 10,
         _fresh: false,
       });
     });
@@ -773,7 +770,7 @@
           row.className = 'param-row';
           row.innerHTML =
             '<span class="param-name">' + escapeHtml(name) + '</span>' +
-            '<input type="range" min="-10" max="10" step="0.1" value="' + escapeHtml(value) + '">' +
+            '<input type="range" min="-10" max="10" step="0.1" value="' + value + '">' +
             '<span class="param-value">' + fmtNum(value, 4) + '</span>';
           const slider = row.querySelector('input');
           const label = row.querySelector('.param-value');
@@ -1238,15 +1235,17 @@
     const exportAbort = { ctrl: null };
 
     const showExportProgress = (p) => {
-      if (!exportProgress.el) return;
-      exportProgress.el.classList.add('show');
+      const box = exportProgress;
+      if (!box.el) return;
+      box.el.classList.add('show');
       const total = Math.max(1, p.total || 1);
       const pct = Math.max(0, Math.min(100, Math.round(((p.done || 0) / total) * 100)));
-      exportProgress.bar.style.width = pct + '%';
-      const label = p.phase === 'probe' ? '准备中…'
-        : p.phase === 'encode' ? '编码 PNG ' + pct + '%'
-        : '绘制 ' + pct + '%';
-      exportProgress.text.textContent = label;
+      if (box.bar) box.bar.style.width = pct + '%';
+      if (box.text) {
+        box.text.textContent = p.phase === 'probe' ? '准备中…'
+          : p.phase === 'encode' ? '编码 PNG ' + pct + '%'
+          : '绘制 ' + pct + '%';
+      }
     };
 
     const cancelExport = () => {
@@ -1255,6 +1254,7 @@
 
     const doExport = async () => {
       const confirmBtn = $('#btn-export-confirm');
+      if (confirmBtn.disabled) return; // 已在导出中，避免 Enter 键重复触发
       const now = new Date();
       const pad = (n) => String(n).padStart(2, '0');
       const stamp = '' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) +
@@ -1262,17 +1262,18 @@
       confirmBtn.disabled = true;
       confirmBtn.textContent = '导出中…';
       if (exportAbort.ctrl) exportAbort.ctrl.abort();
-      exportAbort.ctrl = window.AbortController ? new AbortController() : null;
+      const ctrl = window.AbortController ? new AbortController() : null;
+      exportAbort.ctrl = ctrl;
       showExportProgress({ phase: 'probe' });
       try {
         const res = await plot.exportPNG('OrthoPlot-' + stamp + '.png', {
           width: Math.round(Number(exportW.value)),
           height: Math.round(Number(exportH.value)),
-          signal: exportAbort.ctrl ? exportAbort.ctrl.signal : undefined,
+          signal: ctrl ? ctrl.signal : undefined,
         }, showExportProgress);
         if (!res.ok) {
           toast(res.error || '导出失败', 3000);
-          if (res.error === '已取消导出') exportProgress.el.classList.remove('show');
+          if (res.error === '已取消导出' && exportProgress.el) exportProgress.el.classList.remove('show');
           return;
         }
         closeExport();
@@ -1280,11 +1281,14 @@
       } catch (err) {
         toast('导出失败：' + (err && err.message ? err.message : err), 3000);
       } finally {
-        exportAbort.ctrl = null;
-        exportProgress.el.classList.remove('show');
-        exportProgress.bar.style.width = '0';
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = '导出';
+        // 只清理本次导出的状态；避免旧任务把新任务的控制器清空
+        if (exportAbort.ctrl === ctrl) {
+          exportAbort.ctrl = null;
+          if (exportProgress.el) exportProgress.el.classList.remove('show');
+          if (exportProgress.bar) exportProgress.bar.style.width = '0';
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = '导出';
+        }
       }
     };
 
