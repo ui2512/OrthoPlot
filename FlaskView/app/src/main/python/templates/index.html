@@ -166,8 +166,8 @@
 
     <h4>导出图片</h4>
     <p>工具栏 <b>⬇</b> 打开导出对话框：可选“当前尺寸 / 2× / 1080p / 1440p / 4K / 5K / 8K / 4 亿像素”，
-      也可直接输入任意宽高（总像素上限 4 亿，单边最多 65535）。导出会按所选分辨率 <b>重新绘制</b>而不是放大截图，
-      文字和线条保持清晰；浏览器单张画布装不下时自动分条渲染再拼接，导出的仍是完整的单张 PNG。
+      也可直接输入任意宽高（只限制总像素 4 亿，单边不设固定上限）。导出会按所选分辨率 <b>重新绘制</b>而不是放大截图，
+      文字和线条保持清晰；浏览器单张画布装不下时自动分条 / 分列渲染再拼接，导出的仍是完整的单张 PNG。
       长宽比与画布不同时，画面按目标比例拉伸，保证完整视野。</p>
 
     <h4>触屏与光标模式</h4>
@@ -218,7 +218,7 @@
       <label>宽度 <input id="export-width" type="number" inputmode="numeric" min="100" step="1"> px</label>
       <label>高度 <input id="export-height" type="number" inputmode="numeric" min="100" step="1"> px</label>
     </div>
-    <p class="export-hint">上限：总像素 4 亿，单边最多 65535 像素（PNG 格式限制）。单张画布装得下时整张绘制，装不下会自动分条绘制再拼成一张完整的 PNG；4 亿像素需要 GB 级内存与较长时间，手机端可能失败并给出提示。长宽比与画布不同时会按目标比例拉伸，保证完整视野。</p>
+    <p class="export-hint">上限：总像素 4 亿，单边不设固定上限。单张画布装得下时整张绘制，宽度或高度超出画布上限时自动分条 / 分列绘制，再拼成一张完整的 PNG；4 亿像素需要 GB 级内存与较长时间，手机端可能失败并给出提示。长宽比与画布不同时会按目标比例拉伸，保证完整视野。</p>
     <div class="export-progress" id="export-progress">
       <div class="export-progress-track"><div class="export-progress-bar" id="export-progress-bar"></div></div>
       <span class="export-progress-text" id="export-progress-text">准备中…</span>

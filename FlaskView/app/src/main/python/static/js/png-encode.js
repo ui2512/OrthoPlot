@@ -73,7 +73,9 @@
     const signal = opts.signal;
     const readBlock = opts.readBlock;
     const rowBytes = W * 3;
-    const blockRows = Math.max(1, Math.min(64, Math.floor((4 * 1024 * 1024) / (rowBytes + 1))));
+    const autoRows = Math.max(1, Math.min(64, Math.floor((4 * 1024 * 1024) / (rowBytes + 1))));
+    // 分列渲染时由调用方指定块高，保证读回的一整行能放进内存
+    const blockRows = Math.max(1, Math.min(opts.blockRows || autoRows, 512));
 
     if (typeof CompressionStream !== 'function') {
       throw new Error('当前浏览器不支持 CompressionStream，无法导出超大图片');

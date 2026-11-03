@@ -987,7 +987,7 @@
     exportPNG(filename, opts, onProgress) {
       return Promise.resolve().then(() => {
         opts = opts || {};
-        // 总像素上限 4 亿；单边另有 PNG 格式的 65535 限制。
+        // 只限制总像素；单边大小由 ExportTiles 按画布能力自动分条/分列。
         const MAX_PIXELS = 400 * 1000 * 1000; // 4 亿，覆盖 20000×20000
         const cssW = Math.max(1, this.width);
         const cssH = Math.max(1, this.height);
@@ -999,7 +999,6 @@
         let W = Math.round(Number(opts.width) || cssW * this.dpr);
         let H = Math.round(Number(opts.height) || cssH * this.dpr);
         if (!(W >= 100 && H >= 100)) return { ok: false, error: '分辨率太小（至少 100×100）' };
-        if (W > 65535 || H > 65535) return { ok: false, error: '单边不能超过 65535 像素' };
         if (W * H > MAX_PIXELS) {
           return { ok: false, error: '总像素过大（上限 4 亿像素）' };
         }

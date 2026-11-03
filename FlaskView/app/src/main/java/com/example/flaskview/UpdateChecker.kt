@@ -25,12 +25,12 @@ object UpdateChecker {
     private const val KEY_IGNORED = "ignored_version"
     private const val CHECK_INTERVAL_MS = 6L * 60 * 60 * 1000
     private const val MAX_BYTES = 64 * 1024
-    private const val GITHUB_REPO = "https://github.com/ui2512/OrthoPlot"
+    private const val GITHUB_REPO = "https://gitcode.com/ui2512/OrthoPlot"
 
     private val MANIFEST_URLS = listOf(
-        "https://raw.githubusercontent.com/ui2512/OrthoPlot/main/version.json",
         "https://gitcode.com/api/v5/repos/ui2512/OrthoPlot/contents/version.json?ref=main",
         "https://raw.gitcode.com/ui2512/OrthoPlot/raw/main/version.txt",
+        "https://raw.githubusercontent.com/ui2512/OrthoPlot/main/version.json",
     )
     private val VERSION_RE = Regex("^\\d+(\\.\\d+){0,3}$")
 
@@ -123,14 +123,20 @@ object UpdateChecker {
             if (!VERSION_RE.matches(version)) return null
 
             val downloads = obj.optJSONObject("downloads")
-            val androidUrl = downloads?.optString("android")?.trim().orEmpty()
+            val releases = obj.optJSONObject("releases")
             val repoUrl = obj.optString("url").trim()
+            val releaseUrl = releases?.optString("gitcode")?.trim().orEmpty()
+                .ifEmpty { releases?.optString("github")?.trim().orEmpty() }
+                .ifEmpty { downloads?.optString("web")?.trim().orEmpty() }
+                .ifEmpty {
+                    val base = repoUrl.trimEnd('/')
+                    if (base.startsWith("https://")) "$base/releases" else ""
+                }
             UpdateInfo(
                 version = version,
                 notes = obj.optString("notes").trim(),
-                downloadUrl = androidUrl.takeIf { it.startsWith("https://") }
-                    ?: repoUrl.takeIf { it.startsWith("https://") }
-                    ?: "$GITHUB_REPO/tree/android",
+                downloadUrl = releaseUrl.takeIf { it.startsWith("https://") }
+                    ?: "$GITHUB_REPO/releases",
             )
         } catch (e: Exception) {
             Log.i(TAG, "更新检查失败（$url）：${e.message}")
